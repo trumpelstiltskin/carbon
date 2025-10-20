@@ -287,26 +287,19 @@ pub fn extract_account_metas(
 pub fn unnest_parsed_instructions<T: InstructionDecoderCollection>(
     transaction_metadata: Arc<TransactionMetadata>,
     instructions: Vec<ParsedInstruction<T>>,
-    stack_height: u32,
 ) -> Vec<(InstructionMetadata, DecodedInstruction<T>)> {
     log::trace!("unnest_parsed_instructions(instructions: {instructions:?})");
 
     let mut result = Vec::new();
 
-    for (ix_idx, parsed_instruction) in instructions.into_iter().enumerate() {
+    for parsed_instruction in instructions.into_iter() {
         result.push((
-            InstructionMetadata {
-                transaction_metadata: transaction_metadata.clone(),
-                stack_height,
-                index: ix_idx as u32 + 1,
-                absolute_path: vec![],
-            },
+            parsed_instruction.metadata.clone(),
             parsed_instruction.instruction,
         ));
         result.extend(unnest_parsed_instructions(
             transaction_metadata.clone(),
             parsed_instruction.inner_instructions,
-            stack_height + 1,
         ));
     }
 

@@ -255,6 +255,7 @@ pub fn parse_instructions<T: InstructionDecoderCollection>(
                 program_id: nested_ix.instruction.program_id,
                 instruction,
                 inner_instructions: parse_instructions(&nested_ix.inner_instructions),
+                metadata: nested_ix.metadata.clone(),
             });
         } else {
             for inner_ix in nested_ix.inner_instructions.iter() {
@@ -309,7 +310,6 @@ where
         let unnested_instructions = transformers::unnest_parsed_instructions(
             transaction_metadata.clone(),
             parsed_instructions,
-            0,
         );
 
         self.processor
