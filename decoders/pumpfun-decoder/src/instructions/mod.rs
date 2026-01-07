@@ -112,7 +112,8 @@ impl carbon_core::instruction::InstructionDecoder<'_> for PumpfunDecoder {
             return None;
         }
         let instruction = if !instruction.data.is_empty()
-            && instruction.data[..8] == *buy::Buy::DISCRIMINATOR
+            && (instruction.data[..8] == *buy::Buy::DISCRIMINATOR
+                || instruction.data[..8] == *buy_exact_sol_in::BuyExactSolIn::DISCRIMINATOR)
             && instruction.data.len() == 24
         {
             let mut data = instruction.data.clone();
