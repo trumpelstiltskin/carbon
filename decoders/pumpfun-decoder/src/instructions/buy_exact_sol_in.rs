@@ -1,3 +1,4 @@
+use crate::types::OptionBool;
 use carbon_core::account_utils::next_account;
 use carbon_core::{borsh, CarbonDeserialize};
 use serde::{Deserialize, Serialize};
@@ -7,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct BuyExactSolIn {
     pub spendable_sol_in: u64,
     pub min_tokens_out: u64,
+    pub track_volume: OptionBool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash, serde::Serialize, serde::Deserialize)]
