@@ -207,6 +207,8 @@ impl Datasource for YellowstoneGrpcGeyserClient {
                     result = geyser_client.subscribe_with_request(Some(subscribe_request.clone())) => {
                         match result {
                             Ok((mut subscribe_tx, mut stream)) => {
+                                let mut last_processed_slot: Option<u64> = None;
+
                                 while let Some(message) = stream.next().await {
                                     if cancellation_token.is_cancelled() {
                                         break;
@@ -230,6 +232,26 @@ impl Datasource for YellowstoneGrpcGeyserClient {
                                                 send_subscribe_update_transaction_info(transaction_update.transaction, &metrics, &sender, id_for_loop.clone(), transaction_update.slot, None).await
                                             }
                                             Some(UpdateOneof::Block(block_update)) => {
+                                                // Counter: missed slots
+                                                if let Some(last_slot) = last_processed_slot {
+                                                    if block_update.slot > last_slot + 1 {
+                                                        let missed_slots = block_update.slot - last_slot - 1;
+                                                        metrics
+                                                            .increment_counter("yellowstone_grpc_missed_slots", missed_slots)
+                                                            .await
+                                                            .unwrap_or_else(|e| log::error!("Error recording missed slots metric: {e}"));
+                                                    }
+                                                }
+                                                last_processed_slot = Some(block_update.slot);
+
+                                                // Counter: empty blocks
+                                                if block_update.transactions.is_empty() {
+                                                    metrics
+                                                        .increment_counter("yellowstone_grpc_empty_blocks", 1)
+                                                        .await
+                                                        .unwrap_or_else(|e| log::error!("Error recording empty blocks metric: {e}"));
+                                                }
+
                                                 let block_time = block_update.block_time.map(|ts| ts.timestamp);
 
                                                 for transaction_update in block_update.transactions {
