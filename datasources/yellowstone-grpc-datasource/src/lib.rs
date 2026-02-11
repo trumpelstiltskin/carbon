@@ -296,6 +296,7 @@ impl Datasource for YellowstoneGrpcGeyserClient {
                                         }
                                     }
                                 }
+                                log::warn!("Geyser stream ended (received None), will attempt to resubscribe");
                             }
                             Err(e) => {
                                 log::error!("Failed to subscribe: {e:?}");
