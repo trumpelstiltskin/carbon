@@ -1442,6 +1442,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "carbon-compute-budget-decoder"
+version = "0.12.0"
+dependencies = [
+ "carbon-core",
+ "serde",
+ "solana-instruction",
+ "solana-pubkey 3.0.0",
+]
+
+[[package]]
 name = "carbon-core"
 version = "0.12.0"
 dependencies = [
