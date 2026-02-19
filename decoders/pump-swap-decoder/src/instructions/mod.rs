@@ -114,7 +114,7 @@ impl carbon_core::instruction::InstructionDecoder<'_> for PumpSwapDecoder {
         if !instruction.program_id.eq(&PROGRAM_ID) {
             return None;
         }
-        let instruction = if !instruction.data.is_empty()
+        let instruction = if instruction.data.len() >= 8
             && instruction.data[..8] == *buy::Buy::DISCRIMINATOR
             && instruction.data.len() == 24
         {
