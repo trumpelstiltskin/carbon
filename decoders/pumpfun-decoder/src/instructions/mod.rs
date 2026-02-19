@@ -126,7 +126,7 @@ impl carbon_core::instruction::InstructionDecoder<'_> for PumpfunDecoder {
         } else {
             instruction
         };
-        carbon_core::try_decode_instructions!(instruction,
+        let result = carbon_core::try_decode_instructions!(instruction,
             PumpfunInstruction::AdminSetCreator => admin_set_creator::AdminSetCreator,
             PumpfunInstruction::AdminSetIdlAuthority => admin_set_idl_authority::AdminSetIdlAuthority,
             PumpfunInstruction::AdminUpdateTokenIncentives => admin_update_token_incentives::AdminUpdateTokenIncentives,
@@ -164,7 +164,63 @@ impl carbon_core::instruction::InstructionDecoder<'_> for PumpfunDecoder {
             PumpfunInstruction::SyncUserVolumeAccumulatorEvent => sync_user_volume_accumulator_event::SyncUserVolumeAccumulatorEvent,
             PumpfunInstruction::TradeEvent => trade_event::TradeEvent,
             PumpfunInstruction::UpdateGlobalAuthorityEvent => update_global_authority_event::UpdateGlobalAuthorityEvent,
-        )
+        );
+        if result.is_some() {
+            return result;
+        }
+
+        // Old CreateV2 without is_cashback_enabled
+        if instruction.data.len() >= 8
+            && instruction.data[..8] == *create_v2::CreateV2::DISCRIMINATOR
+        {
+            let mut data = instruction.data.clone();
+            data.push(0);
+            let padded = Instruction {
+                program_id: instruction.program_id,
+                accounts: instruction.accounts.clone(),
+                data,
+            };
+            return carbon_core::try_decode_instructions!(
+                &padded,
+                PumpfunInstruction::CreateV2 => create_v2::CreateV2,
+            );
+        }
+
+        // Old TradeEvent without ix_name/mayhem_mode/cashback fields
+        if instruction.data.len() >= 16
+            && instruction.data[..16] == *trade_event::TradeEvent::DISCRIMINATOR
+        {
+            let mut data = instruction.data.clone();
+            data.extend_from_slice(&[0; 21]); // String(4) + bool(1) + u64(8) + u64(8)
+            let padded = Instruction {
+                program_id: instruction.program_id,
+                accounts: instruction.accounts.clone(),
+                data,
+            };
+            return carbon_core::try_decode_instructions!(
+                &padded,
+                PumpfunInstruction::TradeEvent => trade_event::TradeEvent,
+            );
+        }
+
+        // Old CreateEvent without token_program/is_mayhem_mode/is_cashback_enabled
+        if instruction.data.len() >= 16
+            && instruction.data[..16] == *create_event::CreateEvent::DISCRIMINATOR
+        {
+            let mut data = instruction.data.clone();
+            data.extend_from_slice(&[0; 34]); // Pubkey(32) + bool(1) + bool(1)
+            let padded = Instruction {
+                program_id: instruction.program_id,
+                accounts: instruction.accounts.clone(),
+                data,
+            };
+            return carbon_core::try_decode_instructions!(
+                &padded,
+                PumpfunInstruction::CreateEvent => create_event::CreateEvent,
+            );
+        }
+
+        None
     }
 }
 #[cfg(test)]

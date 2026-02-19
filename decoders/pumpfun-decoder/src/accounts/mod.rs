@@ -29,7 +29,16 @@ impl AccountDecoder<'_> for PumpfunDecoder {
         }
 
         if let Some(decoded_account) =
-            bonding_curve::BondingCurve::deserialize(account.data.as_slice())
+            bonding_curve::BondingCurve::deserialize(account.data.as_slice()).or_else(|| {
+                let needed = 8 + 73 + 2; // discriminator + old fields + new fields (83 bytes)
+                if account.data.len() < needed {
+                    let mut padded = account.data.to_vec();
+                    padded.resize(needed, 0);
+                    bonding_curve::BondingCurve::deserialize(&padded)
+                } else {
+                    None
+                }
+            })
         {
             return Some(carbon_core::account::DecodedAccount {
                 lamports: account.lamports,
@@ -74,6 +83,16 @@ impl AccountDecoder<'_> for PumpfunDecoder {
 
         if let Some(decoded_account) =
             user_volume_accumulator::UserVolumeAccumulator::deserialize(account.data.as_slice())
+                .or_else(|| {
+                    let needed = 8 + 66 + 16; // discriminator + old fields + new fields (90 bytes)
+                    if account.data.len() < needed {
+                        let mut padded = account.data.to_vec();
+                        padded.resize(needed, 0);
+                        user_volume_accumulator::UserVolumeAccumulator::deserialize(&padded)
+                    } else {
+                        None
+                    }
+                })
         {
             return Some(carbon_core::account::DecodedAccount {
                 lamports: account.lamports,

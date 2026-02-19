@@ -53,7 +53,16 @@ impl AccountDecoder<'_> for PumpSwapDecoder {
         }
 
         if let Some(decoded_account) =
-            global_config::GlobalConfig::deserialize(account.data.as_slice())
+            global_config::GlobalConfig::deserialize(account.data.as_slice()).or_else(|| {
+                let needed = 8 + 345 + 290; // discriminator + old fields + new fields (643 bytes)
+                if account.data.len() < needed {
+                    let mut padded = account.data.to_vec();
+                    padded.resize(needed, 0);
+                    global_config::GlobalConfig::deserialize(&padded)
+                } else {
+                    None
+                }
+            })
         {
             return Some(carbon_core::account::DecodedAccount {
                 lamports: account.lamports,
@@ -76,7 +85,18 @@ impl AccountDecoder<'_> for PumpSwapDecoder {
             });
         }
 
-        if let Some(decoded_account) = pool::Pool::deserialize(account.data.as_slice()) {
+        if let Some(decoded_account) =
+            pool::Pool::deserialize(account.data.as_slice()).or_else(|| {
+                let needed = 8 + 236 + 1; // discriminator + old fields + new fields (245 bytes)
+                if account.data.len() < needed {
+                    let mut padded = account.data.to_vec();
+                    padded.resize(needed, 0);
+                    pool::Pool::deserialize(&padded)
+                } else {
+                    None
+                }
+            })
+        {
             return Some(carbon_core::account::DecodedAccount {
                 lamports: account.lamports,
                 data: PumpSwapAccount::Pool(decoded_account),
@@ -88,6 +108,16 @@ impl AccountDecoder<'_> for PumpSwapDecoder {
 
         if let Some(decoded_account) =
             user_volume_accumulator::UserVolumeAccumulator::deserialize(account.data.as_slice())
+                .or_else(|| {
+                    let needed = 8 + 66 + 16; // discriminator + old fields + new fields (90 bytes)
+                    if account.data.len() < needed {
+                        let mut padded = account.data.to_vec();
+                        padded.resize(needed, 0);
+                        user_volume_accumulator::UserVolumeAccumulator::deserialize(&padded)
+                    } else {
+                        None
+                    }
+                })
         {
             return Some(carbon_core::account::DecodedAccount {
                 lamports: account.lamports,

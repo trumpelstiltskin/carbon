@@ -128,7 +128,7 @@ impl carbon_core::instruction::InstructionDecoder<'_> for PumpSwapDecoder {
         } else {
             instruction
         };
-        carbon_core::try_decode_instructions!(instruction,
+        let result = carbon_core::try_decode_instructions!(instruction,
             PumpSwapInstruction::AdminSetCoinCreator => admin_set_coin_creator::AdminSetCoinCreator,
             PumpSwapInstruction::AdminUpdateTokenIncentives => admin_update_token_incentives::AdminUpdateTokenIncentives,
             PumpSwapInstruction::Buy => buy::Buy,
@@ -167,6 +167,62 @@ impl carbon_core::instruction::InstructionDecoder<'_> for PumpSwapDecoder {
             PumpSwapInstruction::UpdateAdminEvent => update_admin_event::UpdateAdminEvent,
             PumpSwapInstruction::UpdateFeeConfigEvent => update_fee_config_event::UpdateFeeConfigEvent,
             PumpSwapInstruction::WithdrawEvent => withdraw_event::WithdrawEvent,
-        )
+        );
+        if result.is_some() {
+            return result;
+        }
+
+        // Old BuyEvent without min_base_amount_out/ix_name/cashback fields
+        if instruction.data.len() >= 16
+            && instruction.data[..16] == *buy_event::BuyEvent::DISCRIMINATOR
+        {
+            let mut data = instruction.data.clone();
+            data.extend_from_slice(&[0; 28]); // u64(8) + String(4) + u64(8) + u64(8)
+            let padded = Instruction {
+                program_id: instruction.program_id,
+                accounts: instruction.accounts.clone(),
+                data,
+            };
+            return carbon_core::try_decode_instructions!(
+                &padded,
+                PumpSwapInstruction::BuyEvent => buy_event::BuyEvent,
+            );
+        }
+
+        // Old SellEvent without cashback fields
+        if instruction.data.len() >= 16
+            && instruction.data[..16] == *sell_event::SellEvent::DISCRIMINATOR
+        {
+            let mut data = instruction.data.clone();
+            data.extend_from_slice(&[0; 16]); // u64(8) + u64(8)
+            let padded = Instruction {
+                program_id: instruction.program_id,
+                accounts: instruction.accounts.clone(),
+                data,
+            };
+            return carbon_core::try_decode_instructions!(
+                &padded,
+                PumpSwapInstruction::SellEvent => sell_event::SellEvent,
+            );
+        }
+
+        // Old CreatePoolEvent without is_mayhem_mode
+        if instruction.data.len() >= 16
+            && instruction.data[..16] == *create_pool_event::CreatePoolEvent::DISCRIMINATOR
+        {
+            let mut data = instruction.data.clone();
+            data.push(0); // bool(1)
+            let padded = Instruction {
+                program_id: instruction.program_id,
+                accounts: instruction.accounts.clone(),
+                data,
+            };
+            return carbon_core::try_decode_instructions!(
+                &padded,
+                PumpSwapInstruction::CreatePoolEvent => create_pool_event::CreatePoolEvent,
+            );
+        }
+
+        None
     }
 }

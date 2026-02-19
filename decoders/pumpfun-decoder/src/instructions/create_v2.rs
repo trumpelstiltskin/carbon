@@ -10,6 +10,7 @@ pub struct CreateV2 {
     pub uri: String,
     pub creator: solana_pubkey::Pubkey,
     pub is_mayhem_mode: bool,
+    pub is_cashback_enabled: super::super::types::OptionBool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash, serde::Serialize, serde::Deserialize)]

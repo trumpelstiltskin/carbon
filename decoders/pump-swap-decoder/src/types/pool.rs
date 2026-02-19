@@ -14,4 +14,6 @@ pub struct Pool {
     pub pool_quote_token_account: solana_pubkey::Pubkey,
     pub lp_supply: u64,
     pub coin_creator: solana_pubkey::Pubkey,
+    pub is_mayhem_mode: bool,
+    pub is_cashback_coin: bool,
 }
