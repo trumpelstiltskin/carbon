@@ -208,8 +208,33 @@ impl Datasource for YellowstoneGrpcGeyserClient {
                         match result {
                             Ok((mut subscribe_tx, mut stream)) => {
                                 let mut last_processed_slot: Option<u64> = None;
+                                const STREAM_TIMEOUT: Duration = Duration::from_secs(30);
 
-                                while let Some(message) = stream.next().await {
+                                loop {
+                                    let message = match tokio::time::timeout(
+                                        STREAM_TIMEOUT,
+                                        stream.next(),
+                                    )
+                                    .await
+                                    {
+                                        Ok(Some(message)) => message,
+                                        Ok(None) => {
+                                            log::warn!("Geyser stream ended (received None), will reconnect");
+                                            break;
+                                        }
+                                        Err(_) => {
+                                            log::warn!(
+                                                "Geyser stream stalled (no data for {}s), forcing reconnect",
+                                                STREAM_TIMEOUT.as_secs()
+                                            );
+                                            metrics
+                                                .increment_counter("yellowstone_grpc_stream_timeouts", 1)
+                                                .await
+                                                .unwrap_or_else(|e| log::error!("Error recording metric: {e}"));
+                                            break;
+                                        }
+                                    };
+
                                     if cancellation_token.is_cancelled() {
                                         break;
                                     }
@@ -296,7 +321,6 @@ impl Datasource for YellowstoneGrpcGeyserClient {
                                         }
                                     }
                                 }
-                                log::warn!("Geyser stream ended (received None), will attempt to resubscribe");
                             }
                             Err(e) => {
                                 log::error!("Failed to subscribe: {e:?}");
@@ -304,6 +328,15 @@ impl Datasource for YellowstoneGrpcGeyserClient {
                         }
                     }
                 }
+
+                // Don't reconnect if shutting down
+                if cancellation_token.is_cancelled() {
+                    break;
+                }
+
+                // Brief delay before reconnecting to avoid tight loops
+                log::info!("Reconnecting to Geyser in 1 second...");
+                tokio::time::sleep(Duration::from_secs(1)).await;
             }
         });
 
