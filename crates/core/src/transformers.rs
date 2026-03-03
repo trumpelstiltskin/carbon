@@ -148,6 +148,15 @@ fn process_instructions<F1, F2>(
 
                     for inner_inst in &inner_tx.instructions {
                         let stack_height = inner_inst.stack_height.unwrap_or(1) as usize;
+                        if stack_height > MAX_INSTRUCTION_STACK_DEPTH {
+                            log::warn!(
+                                "Skipping inner instruction with stack_height {} exceeding max {} in tx {}",
+                                stack_height,
+                                MAX_INSTRUCTION_STACK_DEPTH,
+                                transaction_metadata.signature,
+                            );
+                            continue;
+                        }
                         if stack_height > prev_height {
                             path_stack[stack_height - 1] = 0;
                         } else {
