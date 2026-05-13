@@ -12,7 +12,9 @@ pub mod admin_set_idl_authority_event;
 pub mod admin_update_token_incentives;
 pub mod admin_update_token_incentives_event;
 pub mod buy;
+pub mod buy_exact_quote_in_v2;
 pub mod buy_exact_sol_in;
+pub mod buy_v2;
 pub mod claim_token_incentives;
 pub mod claim_token_incentives_event;
 pub mod close_user_volume_accumulator;
@@ -31,6 +33,7 @@ pub mod init_user_volume_accumulator_event;
 pub mod initialize;
 pub mod migrate;
 pub mod sell;
+pub mod sell_v2;
 pub mod set_creator;
 pub mod set_creator_event;
 pub mod set_metaplex_creator;
@@ -58,7 +61,9 @@ pub enum PumpfunInstruction {
     AdminSetIdlAuthority(admin_set_idl_authority::AdminSetIdlAuthority),
     AdminUpdateTokenIncentives(admin_update_token_incentives::AdminUpdateTokenIncentives),
     Buy(buy::Buy),
+    BuyExactQuoteInV2(buy_exact_quote_in_v2::BuyExactQuoteInV2),
     BuyExactSolIn(buy_exact_sol_in::BuyExactSolIn),
+    BuyV2(buy_v2::BuyV2),
     ClaimTokenIncentives(claim_token_incentives::ClaimTokenIncentives),
     CloseUserVolumeAccumulator(close_user_volume_accumulator::CloseUserVolumeAccumulator),
     CollectCreatorFee(collect_creator_fee::CollectCreatorFee),
@@ -69,6 +74,7 @@ pub enum PumpfunInstruction {
     Initialize(initialize::Initialize),
     Migrate(migrate::Migrate),
     Sell(sell::Sell),
+    SellV2(sell_v2::SellV2),
     SetCreator(set_creator::SetCreator),
     SetMetaplexCreator(set_metaplex_creator::SetMetaplexCreator),
     SetParams(set_params::SetParams),
@@ -131,7 +137,9 @@ impl carbon_core::instruction::InstructionDecoder<'_> for PumpfunDecoder {
             PumpfunInstruction::AdminSetIdlAuthority => admin_set_idl_authority::AdminSetIdlAuthority,
             PumpfunInstruction::AdminUpdateTokenIncentives => admin_update_token_incentives::AdminUpdateTokenIncentives,
             PumpfunInstruction::Buy => buy::Buy,
+            PumpfunInstruction::BuyExactQuoteInV2 => buy_exact_quote_in_v2::BuyExactQuoteInV2,
             PumpfunInstruction::BuyExactSolIn => buy_exact_sol_in::BuyExactSolIn,
+            PumpfunInstruction::BuyV2 => buy_v2::BuyV2,
             PumpfunInstruction::ClaimTokenIncentives => claim_token_incentives::ClaimTokenIncentives,
             PumpfunInstruction::CloseUserVolumeAccumulator => close_user_volume_accumulator::CloseUserVolumeAccumulator,
             PumpfunInstruction::CollectCreatorFee => collect_creator_fee::CollectCreatorFee,
@@ -142,6 +150,7 @@ impl carbon_core::instruction::InstructionDecoder<'_> for PumpfunDecoder {
             PumpfunInstruction::Initialize => initialize::Initialize,
             PumpfunInstruction::Migrate => migrate::Migrate,
             PumpfunInstruction::Sell => sell::Sell,
+            PumpfunInstruction::SellV2 => sell_v2::SellV2,
             PumpfunInstruction::SetCreator => set_creator::SetCreator,
             PumpfunInstruction::SetMetaplexCreator => set_metaplex_creator::SetMetaplexCreator,
             PumpfunInstruction::SetParams => set_params::SetParams,
@@ -191,7 +200,7 @@ impl carbon_core::instruction::InstructionDecoder<'_> for PumpfunDecoder {
             && instruction.data[..16] == *trade_event::TradeEvent::DISCRIMINATOR
         {
             let mut data = instruction.data.clone();
-            data.extend_from_slice(&[0; 21]); // String(4) + bool(1) + u64(8) + u64(8)
+            data.extend_from_slice(&[0; 97]); // old event tail through current quote fields
             let padded = Instruction {
                 program_id: instruction.program_id,
                 accounts: instruction.accounts.clone(),
@@ -208,7 +217,7 @@ impl carbon_core::instruction::InstructionDecoder<'_> for PumpfunDecoder {
             && instruction.data[..16] == *create_event::CreateEvent::DISCRIMINATOR
         {
             let mut data = instruction.data.clone();
-            data.extend_from_slice(&[0; 34]); // Pubkey(32) + bool(1) + bool(1)
+            data.extend_from_slice(&[0; 74]); // token_program/flags plus quote fields
             let padded = Instruction {
                 program_id: instruction.program_id,
                 accounts: instruction.accounts.clone(),

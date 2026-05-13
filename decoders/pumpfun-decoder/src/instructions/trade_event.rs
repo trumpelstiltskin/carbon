@@ -1,5 +1,7 @@
 use carbon_core::{borsh, CarbonDeserialize};
 
+use crate::types::Shareholder;
+
 #[derive(
     CarbonDeserialize, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone, Hash,
 )]
@@ -30,4 +32,11 @@ pub struct TradeEvent {
     pub mayhem_mode: bool,
     pub cashback_fee_basis_points: u64,
     pub cashback: u64,
+    pub buyback_fee_basis_points: u64,
+    pub buyback_fee: u64,
+    pub shareholders: Vec<Shareholder>,
+    pub quote_mint: solana_pubkey::Pubkey,
+    pub quote_amount: u64,
+    pub virtual_quote_reserves: u64,
+    pub real_quote_reserves: u64,
 }

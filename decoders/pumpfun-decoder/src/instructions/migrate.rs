@@ -32,6 +32,7 @@ pub struct MigrateInstructionAccounts {
     pub pump_amm_event_authority: solana_pubkey::Pubkey,
     pub event_authority: solana_pubkey::Pubkey,
     pub program: solana_pubkey::Pubkey,
+    pub rent: solana_pubkey::Pubkey,
 }
 
 impl carbon_core::deserialize::ArrangeAccounts for Migrate {
@@ -65,6 +66,7 @@ impl carbon_core::deserialize::ArrangeAccounts for Migrate {
         let pump_amm_event_authority = next_account(&mut iter)?;
         let event_authority = next_account(&mut iter)?;
         let program = next_account(&mut iter)?;
+        let rent = next_account(&mut iter)?;
 
         Some(MigrateInstructionAccounts {
             global,
@@ -91,6 +93,7 @@ impl carbon_core::deserialize::ArrangeAccounts for Migrate {
             pump_amm_event_authority,
             event_authority,
             program,
+            rent,
         })
     }
 }

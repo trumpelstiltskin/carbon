@@ -40,6 +40,8 @@ pub mod set_metaplex_creator_event;
 pub use set_metaplex_creator_event::*;
 pub mod set_params_event;
 pub use set_params_event::*;
+pub mod shareholder;
+pub use shareholder::*;
 pub mod sync_user_volume_accumulator_event;
 pub use sync_user_volume_accumulator_event::*;
 pub mod trade_event;

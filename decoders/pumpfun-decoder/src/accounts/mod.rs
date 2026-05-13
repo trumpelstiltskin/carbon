@@ -30,7 +30,7 @@ impl AccountDecoder<'_> for PumpfunDecoder {
 
         if let Some(decoded_account) =
             bonding_curve::BondingCurve::deserialize(account.data.as_slice()).or_else(|| {
-                let needed = 8 + 73 + 2; // discriminator + old fields + new fields (83 bytes)
+                let needed = 8 + 107;
                 if account.data.len() < needed {
                     let mut padded = account.data.to_vec();
                     padded.resize(needed, 0);

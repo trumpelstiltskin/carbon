@@ -20,4 +20,6 @@ pub struct CreateEvent {
     pub token_program: solana_pubkey::Pubkey,
     pub is_mayhem_mode: bool,
     pub is_cashback_enabled: bool,
+    pub quote_mint: solana_pubkey::Pubkey,
+    pub virtual_quote_reserves: u64,
 }

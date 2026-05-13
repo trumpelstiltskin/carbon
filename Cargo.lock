@@ -2068,9 +2068,11 @@ dependencies = [
  "carbon-core",
  "carbon-test-utils",
  "serde",
+ "serde_json",
  "solana-account",
  "solana-instruction",
  "solana-pubkey 3.0.0",
+ "solana-transaction-status",
 ]
 
 [[package]]
